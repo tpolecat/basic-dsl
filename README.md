@@ -6,30 +6,7 @@ This is an embedded DSL and monadic interpreter for the execrable BASIC language
 Quick Start
 -----------
 
-```
-$ sbt run
-...
-
-Multiple main classes detected, select one to run:
-
- [1] org.tpolecat.basic.examples.HelloWorld
- [2] org.tpolecat.basic.examples.Batnum
-
-Enter number: 1
-
-[info] Running org.tpolecat.basic.examples.HelloWorld 
-HELLO WORLD
-WHAT IS YOUR NAME?
-? tangley
-HOW MANY TIMES SHALL I PRINT IT?
-? 3
-OK THEN:
-tangley
-tangley
-tangley
-BYE.
-```
-
+You can run the examples via `sbt run`. Other than that, check the code out I guess.
 
 An Example
 ------------------
@@ -61,5 +38,13 @@ object HelloWorld extends App {
 }
 ```
 
+Known Issues
+------------
+
+Where shall I begin? First of all, this thing runs BASIC, which can be considered a bug by definition. By other than that:
+
+* The embedded DSL can be improved to support more syntax, and make existing syntax look more natural. This is boring so I haven't spent much time on it.
+* The implementation is mostly pure, but the bottom-level interpreter in `StatementMachine.scala` side-effects and needs to be pulled up into `IO`. Also, there's a `var` in `BASIC.scala` but I'm not sure how to get rid of it without messing up the surface syntax.
+* Many many other things I haven't thought about.
 
 
