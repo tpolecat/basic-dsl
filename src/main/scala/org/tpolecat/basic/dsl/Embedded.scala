@@ -3,6 +3,11 @@ package org.tpolecat.basic.dsl
 import language.implicitConversions
 import org.tpolecat.basic.ast.Statements
 
+/**
+ * This is what allows you to embed BASIC programs in Scala. It's just smoke and mirrors with a bunch of implicit
+ * structural types. It's the least interesting part of this project but it's what allows the magic to happen. There's
+ * a lot of room for improvement here. 
+ */
 trait Embedded extends Statements { 
 
   protected def addStatement(pc:Int, s:Statement):Unit

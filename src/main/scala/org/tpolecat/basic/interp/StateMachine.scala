@@ -15,20 +15,16 @@ trait StateMachine extends Base {
   type Error
   type Variant
 
-  //  /** Type alias for a disjunction of `Halted` and something else. */
-  //  type Answer[+A] = Halted \/ A // Inference croaks if we use a type lambda for this in the definition of `Op`
-  //
-  //  /**
-  //   * The type of operations for our iterpreter. An operation consumes a `Running` state and returns either a new state
-  //   * and the result, or a `Halted` state (optionally with an `Error`).
-  //   */
-  //  type Op[+A] = StateT[Answer, Running, A]
+  // The type of operations in our interpreter.
+  type Op[+A] = StateT[({type λ[+α] = EitherT[IO, Halted, α]})#λ, Running, A]
 
+  // An alias for the type lambda above; this makes lifting easier.
+  // Given a State[Running, A] we can say sra.lift[Answer] to get a Op[A]
   type Answer[+A] = EitherT[IO, Halted, A]
 
-  type Op[+A] = StateT[({ type λ[+α] = EitherT[IO, Halted, α] })#λ, Running, A]
-
-  implicit def liftio = new MonadIO[Op] {
+  // MonadIO instance for Op
+  // Given an IO[A] we can say ioa.liftIO[Op] to get an Op[A]
+  implicit object OpMonadIO extends MonadIO[Op] {
     def point[A](a: => A): Op[A] = unit(a)
     def bind[A, B](fa: Op[A])(f: A => Op[B]): Op[B] = fa.flatMap(f)
     def liftIO[A](ioa: IO[A]): Op[A] = StateT[Answer, Running, A] { r =>

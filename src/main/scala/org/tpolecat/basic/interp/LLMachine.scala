@@ -22,11 +22,11 @@ trait LLMachine extends StateMachine with Variants with Errors {
   /** Halt the machine normally. */
   def end: Op[Unit] = halt(None)
 
-  /** Jump to the specified line, or halt with `UnknownLine`. */
+  /** Jump to the specified line, or halt with `UndefinedLine`. */
   def jmp(n: Int): Op[Unit] =
     gets(_.p.isDefinedAt(n)).ifM(modify(_.copy(pc = n)), trap(UndefinedLine(n)))
 
-  /** Jump to the subroutine at the specified line, or halt with `UnknownLine`. */
+  /** Jump to the subroutine at the specified line, or halt with `UndefinedLine`. */
   def jsr(n: Int): Op[Unit] =
     for {
       m <- gets(s => s.next(s.pc))
@@ -35,7 +35,7 @@ trait LLMachine extends StateMachine with Variants with Errors {
     } yield ()
 
   /**
-   * Return from a subroutine, halting normally if GOSUB was the last statement, or with `ReturnWithoutGosub` if
+   * Return from a subroutine, halting normally if `GOSUB` was the last statement, or with `ReturnWithoutGosub` if
    * stack is empty.
    */
   def ret: Op[Unit] =
@@ -65,7 +65,7 @@ trait LLMachine extends StateMachine with Variants with Errors {
     }
   }
 
-  /** Initiate a `for` loop, given the binding variable, the body entry point, and max value. */
+  /** Initiate a `FOR` loop, given the binding variable, the body entry point, and max value. */
   def initFor(k: Symbol, entry: Option[Int], max: Int): Op[Unit] =
     entry match {
       case None    => end // FOR was the last statement

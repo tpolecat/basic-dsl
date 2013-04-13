@@ -8,7 +8,7 @@ import org.tpolecat.basic.ast.Statements
 
 trait StatementMachine extends ExprMachine with Statements {
 
-  // Execute a single statement
+  /** Execute the statement at the current program counter. */
   def step: Op[Unit] = gets(s => s.p(s.pc)) >>= {
 
     // Trivial Statements
@@ -54,6 +54,10 @@ trait StatementMachine extends ExprMachine with Statements {
 
   }
 
+  /** 
+   * Prompt with `?` and reads a `Variant` from the console. Accept strings if `isString` is true, otherwise accept 
+   * only numeric values. On parse errors this action will respond `?REDO` in classic BASIC style and retry.
+   */
   private def getV(isString: Boolean): IO[Variant] = for {
     _ <- putStr("> ")
     s <- readLn
@@ -68,6 +72,7 @@ trait StatementMachine extends ExprMachine with Statements {
       }
   } yield v
 
+  /** Print a `Variant` to the console. */
   private def putV(v: Variant): IO[Unit] = IO(v) map {
     case VString(s) => s
     case VNumber(e) => e.fold(_.toString, _.toString)
