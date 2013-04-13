@@ -38,20 +38,6 @@ object HelloWorld extends App {
 }
 ```
 
-How does the interpreter work?
--------------------------
-
-_This explanation is mostly so I can remember how the monad stack works._
-
-The interpreter is a state machine with a running state, appropriately enough, of type `Running`. This is a case class that holds the program, the program counter, variable bindings, loop states, and so on.
-
-An operation `Op[+A]` that depends on this state and returns a value of type `A` has type `Running => (Running, A)`, or `State[Running,A]`. So, this is great but it doesn't deal with failure: what if we can't return a value of type `A`, for example?
-
-To handle this we have to widen our return type to `Running => Either[Halted, (Running,A)]` or `Running => Halted \/ (Running,A)`, also known as `StateT[({type λ[+α] = Halted \/ α})#λ, Running, A]`. We can lift our old state operations into this new `Op` type by declaring a type alias `Answer[A] = Halted \/ A` and then saying `action.lift[Answer]`, and we can reduce `Op[A]` to `Halted \/ (Running,A)` via `op.run(r).run`.
-
-But to handle IO in a pure way, we don't want to get back a `Halted \/ (Running,A)` back, we want an `IO[Halted \/ (Running,A)]`! To do this we need to expand our type again such that `Op[+A] = StateT[({type λ[+α] = EitherT[IO, Halted, α]})#λ, Running, A]`. We can lift our original state operations in the same way as above (with alias `Answer[+A] = EitherT[IO, Halted, A]`) and given an instance of `MonadIO[Op]` (see code) we can lift `IO[A]` to `Op[A]` via `io.liftIO[Op]`. We can now reduce `Op[A]` to `Halted \/ (Running,A)` via `op.run(r).run.unsafePerformIO`.
-
-
 Known Issues
 ------------
 
