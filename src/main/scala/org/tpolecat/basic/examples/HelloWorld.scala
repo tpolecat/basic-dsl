@@ -20,6 +20,6 @@ object HelloWorld extends App {
 
   }
 
-  b.run()
+  b.run.unsafePerformIO()
 
 }

@@ -1,7 +1,9 @@
 package org.tpolecat.basic.interp
 
 import scalaz.-\/
+import scalaz.EitherT
 import scalaz.StateT
+import scalaz.effect.IO
 import scalaz.syntax.monad._
 import scalaz.syntax.std.boolean._
 import org.tpolecat.basic.data.Variants
@@ -12,7 +14,7 @@ trait LLMachine extends StateMachine with Variants with Errors {
 
   /** Halt the machine (with an `Error` if abnormal termination) **/
   def halt[A](oe: Option[Error]): Op[A] =
-    StateT[Answer, Running, A](s => -\/(Halted(s, oe)))
+    StateT[Answer, Running, A](s => EitherT(IO(-\/(Halted(s, oe)))))
 
   /** Halt the machine with the specified `Error`. */
   def trap[A](e: Error): Op[A] = halt[A](Some(e))
@@ -40,7 +42,7 @@ trait LLMachine extends StateMachine with Variants with Errors {
     gets(_.stack) >>= {
       case Some(n) :: ns => modify(_.copy(pc = n, stack = ns))
       case None :: _     => end // GOSUB was last statement in program
-      case Nil           => gets(_.pc).map(ReturnWithoutGosub) >>= trap
+      case Nil           => gets(_.pc) >>= (n => trap(ReturnWithoutGosub(n)))
     }
 
   /** Advance to the next line, or halt normally. */
@@ -79,7 +81,7 @@ trait LLMachine extends StateMachine with Variants with Errors {
         case VNumber(_)                  => trap(TypeMismatch(TInteger, TDouble))
         case VString(_)                  => trap(TypeMismatch(TInteger, TString))
       }
-      case _ => gets(_.pc).map(NextWithoutFor) >>= trap
+      case _ => gets(_.pc) >>= (n => trap(NextWithoutFor(n)))
     }
 
 }

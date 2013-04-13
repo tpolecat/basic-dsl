@@ -1,24 +1,40 @@
 package org.tpolecat.basic.interp
 
 import scalaz.\/
+import scalaz.\/-
 import scalaz.State
 import scalaz.StateT
 import scala.collection.immutable.SortedMap
 import org.tpolecat.basic.ast.Base
+import scalaz.effect.IO
+import scalaz.EitherT
+import scalaz.effect.MonadIO
 
 trait StateMachine extends Base {
 
   type Error
   type Variant
-  
-  /** Type alias for a disjunction of `Halted` and something else. */
-  type Answer[+A] = Halted \/ A // Inference croaks if we use a type lambda for this in the definition of `Op`
 
-  /**
-   * The type of operations for our iterpreter. An operation consumes a `Running` state and returns either a new state
-   * and the result, or a `Halted` state (optionally with an `Error`).
-   */
-  type Op[+A] = StateT[Answer, Running, A]
+  //  /** Type alias for a disjunction of `Halted` and something else. */
+  //  type Answer[+A] = Halted \/ A // Inference croaks if we use a type lambda for this in the definition of `Op`
+  //
+  //  /**
+  //   * The type of operations for our iterpreter. An operation consumes a `Running` state and returns either a new state
+  //   * and the result, or a `Halted` state (optionally with an `Error`).
+  //   */
+  //  type Op[+A] = StateT[Answer, Running, A]
+
+  type Answer[+A] = EitherT[IO, Halted, A]
+
+  type Op[+A] = StateT[({ type λ[+α] = EitherT[IO, Halted, α] })#λ, Running, A]
+
+  implicit def liftio = new MonadIO[Op] {
+    def point[A](a: => A): Op[A] = unit(a)
+    def bind[A, B](fa: Op[A])(f: A => Op[B]): Op[B] = fa.flatMap(f)
+    def liftIO[A](ioa: IO[A]): Op[A] = StateT[Answer, Running, A] { r =>
+      EitherT(ioa.map(a => \/-((r, a))))
+    }
+  }
 
   /**
    * State of a running machine, with the program, program counter, stack, and bindings.
@@ -43,18 +59,18 @@ trait StateMachine extends Base {
   // LIFTED STATE OPERATIONS
 
   /** Operation to return the current `Running` state. */
-  def get: Op[Running] = State.get.lift
+  def get: Op[Running] = State.get.lift[Answer]
 
   /** Operation to return the current `Running` state, mapped to some type `A`. */
-  def gets[A](f: Running => A): Op[A] = State.gets(f).lift
+  def gets[A](f: Running => A): Op[A] = State.gets(f).lift[Answer]
 
   /** Operation to modify the current `Running` state. */
-  def modify(f: Running => Running): Op[Unit] = State.modify(f).lift
+  def modify(f: Running => Running): Op[Unit] = State.modify(f).lift[Answer]
 
   /** Operation to replace the current `Running` state. */
-  def put(s: Running): Op[Unit] = State.put(s).lift
+  def put(s: Running): Op[Unit] = State.put(s).lift[Answer]
 
   /** Operation that returns the passed value. */
-  def unit[A](a: A): Op[A] = State.state(a).lift
+  def unit[A](a: A): Op[A] = State.state(a).lift[Answer]
 
 }

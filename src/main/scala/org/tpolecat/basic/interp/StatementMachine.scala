@@ -2,33 +2,34 @@ package org.tpolecat.basic.interp
 
 import scalaz.syntax.monad._
 import scalaz.syntax.std.boolean._
+import scalaz.effect.IO
+import scalaz.effect.IO._
 import org.tpolecat.basic.ast.Statements
 
 // high-level statements
 trait StatementMachine extends ExprMachine with Statements {
 
-  // All the IO is here, so in theory step can mix in another transformer for IO
-
-  def input(isString: Boolean) = unit {
-    def read: Variant = {
-      print("? ")
-      val s = readLine
-      if (isString) VString(s)
-      else try {
-        Variant(s.toDouble)
+  def getV(isString: Boolean): IO[Variant] = for {
+    _ <- putStr("> ")
+    s <- readLn
+    v <- if (isString)
+      IO(VString(s))
+    else
+      try {
+        val d = s.toDouble
+        IO(Variant(d))
       } catch {
-        case _: NumberFormatException =>
-          println("?REDO")
-          read
+        case _: NumberFormatException => putStrLn("?REDO") >> getV(isString)
       }
-    }
-    read
-  }
+  } yield v
 
-  def output(v: Variant): Op[Unit] = unit(v).map {
+  def putV(v: Variant): IO[Unit] = IO(v) map {
     case VString(s) => s
     case VNumber(e) => e.fold(_.toString, _.toString)
-  } map (println)
+  } >>= putStrLn
+
+  def input(isString: Boolean) = getV(isString).liftIO[Op]
+  def output(v: Variant): Op[Unit] = putV(v).liftIO[Op]
 
   def step: Op[Unit] = gets(s => s.p(s.pc)) >>= {
 

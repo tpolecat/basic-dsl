@@ -1,7 +1,7 @@
 Embedded BASIC
 ==============
 
-This is an embedded DSL and monadic interpreter for the execrable BASIC language. It's useless but kind of interesting. Still a work in progress, but you can write real programs as things stand. The `examples/` directory has a playable game that I typed in from a book written in 1978. 
+This is an embedded DSL and pure monadic interpreter for the execrable BASIC language. It's useless but kind of interesting. Still a work in progress, but you can write real programs as things stand. The `examples/` directory has a playable game that I typed in from a book written in 1978. 
 
 Quick Start
 -----------
@@ -33,7 +33,7 @@ object HelloWorld extends App {
 
   }
 
-  b.run()
+  b.run.unsafePerformIO()
 
 }
 ```
@@ -44,7 +44,7 @@ Known Issues
 Where shall I begin? First of all, this thing runs BASIC, which can be considered a bug by definition. By other than that:
 
 * The embedded DSL can be improved to support more syntax, and make existing syntax look more natural. This is boring so I haven't spent much time on it.
-* The implementation is mostly pure, but the bottom-level interpreter in `StatementMachine.scala` side-effects and needs to be pulled up into `IO`. Also, there's a `var` in `BASIC.scala` but I'm not sure how to get rid of it without messing up the surface syntax.
+* The implementation is mostly pure, but there's a `var` in `BASIC.scala` and I'm not sure how to get rid of it without messing up the surface syntax.
 * Many many other things I haven't thought about.
 
 
