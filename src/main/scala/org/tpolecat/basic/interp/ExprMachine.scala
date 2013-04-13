@@ -13,7 +13,11 @@ trait ExprMachine extends LLMachine with Expressions {
 
     case Lit(v)    => unit(v)
     case Var(s)    => lookup(s)
-    case Un(op, e) => eval(e) >>= (v => op.vop(v).fold(trap, unit))
+    
+    case Un(op, e) => for {
+      a <- eval(e) 
+      b <- op.vop(a).fold(trap, unit)
+    } yield b
 
     case Bin(e1, op, e2) => for {
       a <- eval(e1)
