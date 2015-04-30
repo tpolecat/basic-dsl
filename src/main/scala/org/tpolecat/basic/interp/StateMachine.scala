@@ -16,11 +16,11 @@ trait StateMachine extends Base {
   type Variant
 
   // The type of operations in our interpreter.
-  type Op[+A] = StateT[({type λ[+α] = EitherT[IO, Halted, α]})#λ, Running, A]
+  type Op[A] = StateT[({type λ[α] = EitherT[IO, Halted, α]})#λ, Running, A]
 
   // An alias for the type lambda above; this makes lifting easier.
   // Given a State[Running, A] we can say sra.lift[Answer] to get a Op[A]
-  type Answer[+A] = EitherT[IO, Halted, A]
+  type Answer[A] = EitherT[IO, Halted, A]
 
   // MonadIO instance for Op
   // Given an IO[A] we can say ioa.liftIO[Op] to get an Op[A]

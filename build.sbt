@@ -2,7 +2,7 @@ name := "basic-dsl"
 
 version := "0.1"
 
-scalaVersion := "2.10.0"
+scalaVersion := "2.11.5"
 
 resolvers ++= Seq(
   "snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
@@ -10,8 +10,8 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.scalaz" % "scalaz-core_2.10" % "7.0.0-M9",
-  "org.scalaz" % "scalaz-effect_2.10" % "7.0.0-M9"
+  "org.scalaz" %% "scalaz-core"   % "7.1.0",
+  "org.scalaz" %% "scalaz-effect" % "7.1.0"
 )
 
 
